@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 import { getCachedRunIdForWeeks } from "@/lib/pulseCache";
 import { artifactPathsForRun } from "@/lib/pulses";
 import {
+  flattenDetail,
   railwayBackendConfigured,
   railwayBackendMisconfigured,
   railwayPost,
+  readJsonSafe,
 } from "@/lib/railwayBackend";
 import {
   pipelineFailureHint,
@@ -21,6 +23,9 @@ type Body = {
   /** When true, skip 24h cache and re-fetch reviews + rebuild pulse. */
   forceRefresh?: boolean;
 };
+
+/** Allow long Railway pipeline + email (Vercel Pro; Hobby still caps ~10s). */
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   const body = (await req.json()) as Body;
@@ -52,19 +57,23 @@ export async function POST(req: Request) {
       mode,
       forceRefresh,
     });
-    const data = (await res.json().catch(() => ({}))) as {
+    const raw = await readJsonSafe(res);
+    const data = raw as {
       ok?: boolean;
       error?: string;
-      detail?: string;
+      detail?: unknown;
       message?: string;
       runId?: string;
       usedCache?: boolean;
     };
+    const detailStr = flattenDetail(data.detail);
     if (!res.ok) {
       return NextResponse.json(
         {
-          error: data.error ?? "Railway email pipeline failed",
-          detail: data.detail ?? "",
+          error:
+            (typeof data.error === "string" && data.error) ||
+            "Railway email pipeline failed",
+          detail: detailStr,
         },
         { status: res.status >= 400 && res.status < 600 ? res.status : 500 },
       );

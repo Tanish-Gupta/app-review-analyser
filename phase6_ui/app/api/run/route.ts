@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import {
+  flattenDetail,
   railwayBackendConfigured,
   railwayBackendMisconfigured,
   railwayPost,
+  readJsonSafe,
 } from "@/lib/railwayBackend";
 import {
   pipelineFailureHint,
   runPhasesOneThroughFour,
 } from "@/lib/runPipeline";
+
+/** Allow long Railway pipeline (Vercel Pro; Hobby still caps ~10s). */
+export const maxDuration = 300;
 
 /** Run phases 1–4 only (no email). Used by “Generate pulse”. */
 export async function POST(req: Request) {
@@ -31,17 +36,21 @@ export async function POST(req: Request) {
 
   if (railwayBackendConfigured()) {
     const res = await railwayPost("/v1/pipeline/run", { weeks });
-    const data = (await res.json().catch(() => ({}))) as {
+    const raw = await readJsonSafe(res);
+    const data = raw as {
       error?: string;
-      detail?: string;
+      detail?: unknown;
       runId?: string;
       hint?: string;
     };
+    const detailStr = flattenDetail(data.detail);
     if (!res.ok) {
       return NextResponse.json(
         {
-          error: data.error ?? "Railway pipeline failed",
-          detail: data.detail ?? "",
+          error:
+            (typeof data.error === "string" && data.error) ||
+            "Railway pipeline failed",
+          detail: detailStr,
         },
         { status: res.status >= 400 && res.status < 600 ? res.status : 500 },
       );

@@ -46,6 +46,8 @@ See **[`phase6_ui/.env.example`](./.env.example)** for copy-paste names and **[`
 
 Without those env vars on Vercel, those buttons return **501** (no local Python on Vercel).
 
+**Timeouts:** The full pipeline can run **many minutes** on Railway. **Vercel Hobby** serverless functions are capped at **~10 seconds** — the request will die with no success. Use **Vercel Pro** (or run the UI locally) so `/api/email` can use **`maxDuration` = 300s** (already set on the route). For runs longer than 5 minutes, you still need a **async job** architecture later.
+
 ## Deploy (Vercel)
 
 **Yes — deploy the Next.js app.** Vercel runs **Phase 6** in the browser and as serverless routes. The Python pipeline runs **on Railway** when `RAILWAY_API_URL` + `RAILWAY_API_SECRET` are set; otherwise it runs only **locally** via `python3`.

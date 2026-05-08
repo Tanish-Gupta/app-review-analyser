@@ -24,3 +24,27 @@ export async function railwayPost(path: string, body: unknown): Promise<Response
     body: JSON.stringify(body),
   });
 }
+
+/** Parse JSON or return a placeholder when Railway/Vercel returns HTML or empty body. */
+export async function readJsonSafe(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return {
+      error: "Non-JSON response from upstream",
+      detail: text.slice(0, 800),
+    };
+  }
+}
+
+export function flattenDetail(detail: unknown): string {
+  if (detail == null) return "";
+  if (typeof detail === "string") return detail;
+  try {
+    return JSON.stringify(detail).slice(0, 2000);
+  } catch {
+    return String(detail);
+  }
+}

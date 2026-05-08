@@ -8,6 +8,25 @@ type Props = {
   defaultRunId: string;
 };
 
+function formatFetchError(err: unknown): string {
+  const s = String(err);
+  if (s.includes("Failed to fetch") || s.includes("NetworkError"))
+    return "Network error — check connection, or Vercel/Railway may have timed out (full pipeline can take many minutes).";
+  if (s.includes("aborted") || s.includes("AbortError"))
+    return "Request was aborted or timed out.";
+  return s.slice(0, 400);
+}
+
+async function readClientJson(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return { error: "Bad response", detail: text.slice(0, 400) };
+  }
+}
+
 export function ControlsBar({ defaultRunId }: Props) {
   const router = useRouter();
   const [weeks, setWeeks] = useState(12);
@@ -22,22 +41,27 @@ export function ControlsBar({ defaultRunId }: Props) {
     setBusy(true);
     setMsg(null);
     try {
+      setMsg("Starting pipeline… This often takes several minutes on Railway.");
       const res = await fetch("/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ weeks }),
       });
-      const data = await res.json();
+      const data = await readClientJson(res);
       if (!res.ok) {
-        const parts = [data.error, (data as { detail?: string }).detail].filter(
-          Boolean,
-        );
+        const parts = [
+          typeof data.error === "string" ? data.error : undefined,
+          typeof data.detail === "string" ? data.detail : undefined,
+        ].filter(Boolean);
         setMsg(parts.join(" — ").slice(0, 800) || "Pipeline failed");
         return;
       }
-      if (data.runId) {
+      if (typeof data.runId === "string" && data.runId) {
+        setMsg(null);
         router.push(`/runs/${data.runId}`);
       }
+    } catch (e) {
+      setMsg(formatFetchError(e));
     } finally {
       setBusy(false);
     }
@@ -47,6 +71,9 @@ export function ControlsBar({ defaultRunId }: Props) {
     setBusy(true);
     setMsg(null);
     try {
+      setMsg(
+        "Contacting server… Full ingest + Groq + email can take 5–15+ minutes. Leave this tab open.",
+      );
       const res = await fetch("/api/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,16 +85,21 @@ export function ControlsBar({ defaultRunId }: Props) {
           forceRefresh,
         }),
       });
-      const data = await res.json();
+      const data = await readClientJson(res);
       if (!res.ok) {
-        const parts = [data.error, (data as { detail?: string }).detail].filter(
-          Boolean,
-        );
+        const parts = [
+          typeof data.error === "string" ? data.error : undefined,
+          typeof data.detail === "string" ? data.detail : undefined,
+        ].filter(Boolean);
         setMsg(parts.join(" — ").slice(0, 800) || "Could not complete");
       } else {
-        setMsg(data.message ?? "Done.");
+        setMsg(
+          (typeof data.message === "string" ? data.message : null) ?? "Done.",
+        );
         router.refresh();
       }
+    } catch (e) {
+      setMsg(formatFetchError(e));
     } finally {
       setBusy(false);
     }
