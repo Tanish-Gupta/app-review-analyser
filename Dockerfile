@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 ENV PIP_NO_CACHE_DIR=1
 
-COPY requirements-docker.txt .
+COPY requirements.txt requirements-docker.txt ./
 RUN pip install --upgrade pip \
     && pip install -r requirements-docker.txt
 
