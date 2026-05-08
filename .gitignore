@@ -17,8 +17,8 @@ data/cache/*
 !data/cache/.gitkeep
 !data/**/.gitkeep
 
-# Node (Phase 6 UI)
-phase6_ui/node_modules/
+# Node (workspace root + phase6_ui)
+node_modules/
 phase6_ui/.next/
 phase6_ui/out/
 

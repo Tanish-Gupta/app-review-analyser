@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "npm install --prefix phase6_ui",
-  "buildCommand": "npm run build --prefix phase6_ui"
+  "installCommand": "npm install",
+  "buildCommand": "npm run build"
 }

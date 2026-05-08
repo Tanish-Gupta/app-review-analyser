@@ -51,12 +51,16 @@ Disabled on Vercel (`501`) until a hosted worker exists.
 3. **Critical:** under **Configure Project**, set **Framework Preset** to **Next.js** (not Python).
 4. Either:
    - **Recommended:** set **Root Directory** to **`phase6_ui`**, then use default **Install Command** `npm install` and **Build Command** `npm run build`, **or**
-   - Leave root directory as **`.`** — the repo now includes root **`package.json`** + **`vercel.json`** so Vercel runs `npm install` / `npm run build` inside **`phase6_ui`** (avoids Python trying to own the project because of top-level `requirements.txt`).
+   - Leave root directory as **`.`** — the monorepo root **`package.json`** declares **`next`** (and npm **workspaces** include `phase6_ui`) so Vercel detects Next.js; **`vercel.json`** runs **`npm install`** + **`npm run build`** at the repo root (still avoids Python owning the deploy because of top-level `requirements.txt`).
 5. Deploy. The site will show **`public/sample/`** pulse data when `data/output/` is absent (normal on Vercel).
 
 ### “No python entrypoint found”
 
 Vercel saw **`requirements.txt`** at the repo root and assumed a **Python** project. Fix: use **Next.js** as the framework and either **Root Directory = `phase6_ui`** or pull the latest repo (root **`vercel.json`** + **`package.json`** delegates the build to the UI folder).
+
+### “No Next.js version detected”
+
+Vercel reads the **`package.json` in your Root Directory**. If Root Directory is **`.`** (repo root), that file must list **`next`** in **dependencies** — the monorepo root **`package.json`** now does, plus **`workspaces`: [`phase6_ui`]**. Alternatively set **Root Directory** to **`phase6_ui`** only so Vercel reads **`phase6_ui/package.json`** directly.
 
 ### What works vs not
 

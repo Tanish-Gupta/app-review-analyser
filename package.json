@@ -1,10 +1,15 @@
 {
   "name": "app-review-analyser",
   "private": true,
-  "description": "Monorepo: Python pipeline + Next.js UI. Vercel only builds phase6_ui (see vercel.json).",
+  "description": "Monorepo: Python pipeline + Next.js UI (workspace `pulse-ui`).",
+  "workspaces": ["phase6_ui"],
+  "dependencies": {
+    "next": "14.2.35",
+    "react": "^18",
+    "react-dom": "^18"
+  },
   "scripts": {
-    "build": "npm run build --prefix phase6_ui",
-    "dev": "npm run dev --prefix phase6_ui",
-    "install:ui": "npm install --prefix phase6_ui"
+    "build": "npm run build -w pulse-ui",
+    "dev": "npm run dev -w pulse-ui"
   }
 }
