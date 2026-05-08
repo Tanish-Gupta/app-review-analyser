@@ -1,21 +1,32 @@
 /** When `RAILWAY_API_URL` + `RAILWAY_API_SECRET` are set, API routes proxy to the Docker API on Railway. */
 
+/** Normalize env URL: trim whitespace (common Vercel copy-paste bug) and trailing slashes. */
+export function getRailwayApiBase(): string {
+  return (process.env.RAILWAY_API_URL ?? "")
+    .trim()
+    .replace(/\/+$/, "");
+}
+
+export function getRailwayApiSecret(): string {
+  return (process.env.RAILWAY_API_SECRET ?? "").trim();
+}
+
 export function railwayBackendConfigured(): boolean {
-  const url = process.env.RAILWAY_API_URL?.trim();
-  const secret = process.env.RAILWAY_API_SECRET?.trim();
-  return Boolean(url && secret);
+  return Boolean(getRailwayApiBase() && getRailwayApiSecret());
 }
 
 export function railwayBackendMisconfigured(): boolean {
-  const url = process.env.RAILWAY_API_URL?.trim();
-  const secret = process.env.RAILWAY_API_SECRET?.trim();
+  const url = (process.env.RAILWAY_API_URL ?? "").trim();
+  const secret = getRailwayApiSecret();
   return Boolean(url && !secret);
 }
 
 export async function railwayPost(path: string, body: unknown): Promise<Response> {
-  const base = process.env.RAILWAY_API_URL!.replace(/\/$/, "");
-  const secret = process.env.RAILWAY_API_SECRET!;
-  return fetch(`${base}${path}`, {
+  const base = getRailwayApiBase();
+  const secret = getRailwayApiSecret();
+  const rel = path.startsWith("/") ? path : `/${path}`;
+  const href = new URL(rel, `${base}/`).toString();
+  return fetch(href, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
