@@ -40,7 +40,7 @@ Requires repo-root **`.env`**: `GROQ_API_KEY`, plus SMTP or Resend for send. Ful
 
 ## Connect Vercel to Railway
 
-If **`RAILWAY_API_URL`** and **`RAILWAY_API_SECRET`** are set on **Vercel**, **`/api/run`** and **`/api/email`** proxy to your **Railway** FastAPI service — **Generate pulse** and **Fetch & send** work from the hosted UI. Groq and email credentials live on **Railway**, not Vercel.
+If **`RAILWAY_API_URL`** and **`RAILWAY_API_SECRET`** are set on **Vercel**, **`/api/run`**, **`/api/generate-pulse`** (same handler), and **`/api/email`** proxy to your **Railway** FastAPI service — **Generate pulse** and **Fetch & send** work from the hosted UI. Groq and email credentials live on **Railway**, not Vercel.
 
 See **[`phase6_ui/.env.example`](./.env.example)** for copy-paste names and **[`railway_api/README.md`](../railway_api/README.md)** for the HTTP API.
 

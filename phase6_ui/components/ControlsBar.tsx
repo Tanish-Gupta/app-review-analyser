@@ -27,6 +27,42 @@ async function readClientJson(res: Response): Promise<Record<string, unknown>> {
   }
 }
 
+function formatDetailField(d: unknown): string {
+  if (d == null) return "";
+  if (typeof d === "string") return d;
+  try {
+    return JSON.stringify(d).slice(0, 1200);
+  } catch {
+    return String(d);
+  }
+}
+
+function hintForHttpStatus(status: number): string | null {
+  if (status === 504 || status === 408)
+    return "Gateway/timeout — the pipeline often exceeds Vercel’s serverless limit on Hobby (~10s). Use Vercel Pro (higher maxDuration) or run the heavy job directly on Railway.";
+  if (status === 401 || status === 403)
+    return "Auth rejected — RAILWAY_API_SECRET on Vercel must exactly match Railway’s variable.";
+  if (status === 503)
+    return "Misconfiguration — e.g. RAILWAY_API_URL without RAILWAY_API_SECRET.";
+  if (status === 501)
+    return "Railway not connected — add RAILWAY_API_URL + RAILWAY_API_SECRET in Vercel env, then redeploy.";
+  return null;
+}
+
+/** Human-readable failure for any /api/* JSON error response. */
+function formatApiFailure(res: Response, data: Record<string, unknown>): string {
+  const lines: string[] = [];
+  lines.push(`HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ""}`);
+  const hint = hintForHttpStatus(res.status);
+  if (hint) lines.push(hint);
+  if (typeof data.error === "string" && data.error.trim()) lines.push(data.error.trim());
+  const detail = formatDetailField(data.detail);
+  if (detail) lines.push(detail);
+  if (lines.length === 1)
+    lines.push("Empty error body — check Vercel → Deployment → Logs for this route.");
+  return lines.join("\n").slice(0, 2500);
+}
+
 export function ControlsBar({ defaultRunId }: Props) {
   const router = useRouter();
   const [weeks, setWeeks] = useState(12);
@@ -49,11 +85,7 @@ export function ControlsBar({ defaultRunId }: Props) {
       });
       const data = await readClientJson(res);
       if (!res.ok) {
-        const parts = [
-          typeof data.error === "string" ? data.error : undefined,
-          typeof data.detail === "string" ? data.detail : undefined,
-        ].filter(Boolean);
-        setMsg(parts.join(" — ").slice(0, 800) || "Pipeline failed");
+        setMsg(formatApiFailure(res, data));
         return;
       }
       if (typeof data.runId === "string" && data.runId) {
@@ -87,11 +119,7 @@ export function ControlsBar({ defaultRunId }: Props) {
       });
       const data = await readClientJson(res);
       if (!res.ok) {
-        const parts = [
-          typeof data.error === "string" ? data.error : undefined,
-          typeof data.detail === "string" ? data.detail : undefined,
-        ].filter(Boolean);
-        setMsg(parts.join(" — ").slice(0, 800) || "Could not complete");
+        setMsg(formatApiFailure(res, data));
       } else {
         setMsg(
           (typeof data.message === "string" ? data.message : null) ?? "Done.",
@@ -211,12 +239,17 @@ export function ControlsBar({ defaultRunId }: Props) {
         >
           {busy ? "Working…" : "Fetch latest data & send email"}
         </button>
-        {msg && (
-          <span className="font-dm text-sm leading-snug text-[#00ffc8]/85">
-            {msg}
-          </span>
-        )}
       </div>
+      {msg && (
+        <div className="mt-4 rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+          <p className="font-dm text-[10px] font-semibold uppercase tracking-wider text-white/40">
+            Status
+          </p>
+          <p className="mt-1 max-w-[min(90vw,48rem)] whitespace-pre-wrap break-words font-dm text-sm leading-relaxed text-[#00ffc8]/90">
+            {msg}
+          </p>
+        </div>
+      )}
       <p className="mt-4 font-dm text-xs leading-relaxed text-white/35">
         Sends after running the full pipeline (or reusing a pulse from the last 24
         hours for the same week range, unless “Force fresh run” is checked).
