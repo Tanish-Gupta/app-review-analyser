@@ -55,11 +55,13 @@ Without those env vars on Vercel, those buttons return **501** (no local Python 
 1. Push this repo to GitHub (you already have [Tanish-Gupta/app-review-analyser](https://github.com/Tanish-Gupta/app-review-analyser)).
 2. In [Vercel](https://vercel.com/new) → **Add New Project** → import that repo.
 3. **Critical:** under **Configure Project**, set **Framework Preset** to **Next.js** (not Python).
-4. Either:
-   - **Recommended:** set **Root Directory** to **`phase6_ui`**, then use default **Install Command** `npm install` and **Build Command** `npm run build`, **or**
-   - Leave root directory as **`.`** — the monorepo root **`package.json`** declares **`next`** (and npm **workspaces** include `phase6_ui`) so Vercel detects Next.js; **`vercel.json`** runs **`npm install`** + **`npm run build`** at the repo root (still avoids Python owning the deploy because of top-level `requirements.txt`).
-5. Add **Environment variables** (see **`.env.example`** in this folder): at minimum **`RAILWAY_API_URL`** + **`RAILWAY_API_SECRET`** to use your Railway backend.
-6. Deploy. The site will show **`public/sample/`** pulse data when `data/output/` is absent (normal on Vercel); after a successful Railway-backed run, refresh — **note:** new pulse JSON still lands on Railway’s disk, not Vercel’s filesystem, so the **home page** may keep showing **sample** until you add blob sync or copy artifacts into **`public/sample/`** (see architecture doc).
+4. **Root Directory:** set to **`phase6_ui`** (recommended). Then clear **Output Directory** in Vercel **Settings → General** (leave empty). Do **not** combine “Root = `phase6_ui`” with **`outputDirectory: phase6_ui/.next`** — that doubles the path to `phase6_ui/phase6_ui/.next`.
+5. If you instead leave **Root Directory** at **`.`** (repo root), set **Output Directory** in the Vercel dashboard to **`phase6_ui/.next`** (the root `vercel.json` no longer sets it, to avoid the duplicate-path bug).
+6. Either:
+   - With **Root = `phase6_ui`:** use default **Install** `npm install` and **Build** `npm run build`, **or**
+   - With **Root = `.`:** the root **`vercel.json`** runs **`npm install`** + **`npm run build`** at the repo root (workspaces).
+7. Add **Environment variables** (see **`.env.example`** in this folder): at minimum **`RAILWAY_API_URL`** + **`RAILWAY_API_SECRET`** to use your Railway backend.
+8. Deploy. The site will show **`public/sample/`** pulse data when `data/output/` is absent (normal on Vercel); after a successful Railway-backed run, refresh — **note:** new pulse JSON still lands on Railway’s disk, not Vercel’s filesystem, so the **home page** may keep showing **sample** until you add blob sync or copy artifacts into **`public/sample/`** (see architecture doc).
 
 ### “No python entrypoint found”
 
@@ -69,9 +71,10 @@ Vercel saw **`requirements.txt`** at the repo root and assumed a **Python** proj
 
 Vercel reads the **`package.json` in your Root Directory**. If Root Directory is **`.`** (repo root), that file must list **`next`** in **dependencies** — the monorepo root **`package.json`** now does, plus **`workspaces`: [`phase6_ui`]**. Alternatively set **Root Directory** to **`phase6_ui`** only so Vercel reads **`phase6_ui/package.json`** directly.
 
-### “The Next.js output directory `.next` was not found at …/path0/.next”
+### “The Next.js output directory `.next` was not found” / `phase6_ui/phase6_ui/.next`
 
-The app builds to **`phase6_ui/.next`**, not the repo root. The root **`vercel.json`** sets **`outputDirectory`** to **`phase6_ui/.next`**. In Vercel **Project → Settings → General**, clear any manual **Output Directory** override (leave empty / default) so **`vercel.json`** wins. Easiest alternative: set **Root Directory** to **`phase6_ui`** only and remove custom output directory — then `.next` lives next to that **`package.json`**.
+- **Cause:** **Root Directory** is **`phase6_ui`** but **Output Directory** was set to **`phase6_ui/.next`** (e.g. from root `vercel.json`). Vercel resolves that **under** `phase6_ui`, so the path doubles.
+- **Fix:** Use **Root Directory = `phase6_ui`** and leave **Output Directory** **empty** (default `.next` next to `package.json`). Or use **Root = `.`** and set dashboard **Output Directory** to **`phase6_ui/.next`** only in that case.
 
 ### What works where
 
