@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import sys
+import traceback
 from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -87,53 +88,70 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+def _run_cmd(cmd: list[str]) -> tuple[int, str]:
+    """Run subprocess; discard stdout (can be huge) and keep tail of stderr for errors."""
+    proc = subprocess.run(
+        cmd,
+        cwd=PROJECT_ROOT,
+        env={**os.environ},
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    err = (proc.stderr or "")[-12000:]
+    return proc.returncode, err
+
+
 @app.post("/v1/pipeline/run")
 def run_pipeline(
     body: PipelineRunBody,
     _: Annotated[None, Depends(verify_bearer)],
 ):
-    settings.ensure_dirs()
-    cmd = [
-        sys.executable,
-        "-m",
-        "orchestrator.run_pipeline",
-        "--weeks",
-        str(body.weeks),
-    ]
-    proc = subprocess.run(
-        cmd,
-        cwd=PROJECT_ROOT,
-        env={**os.environ},
-        capture_output=True,
-        text=True,
-    )
-    err = (proc.stderr or "") + (proc.stdout or "")
-    if proc.returncode != 0:
+    try:
+        settings.ensure_dirs()
+        cmd = [
+            sys.executable,
+            "-m",
+            "orchestrator.run_pipeline",
+            "--weeks",
+            str(body.weeks),
+        ]
+        code, err = _run_cmd(cmd)
+        if code != 0:
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": pipeline_failure_hint(err),
+                    "detail": err[-2000:],
+                },
+            )
+        session_path = PROJECT_ROOT / "data" / "cache" / "session.json"
+        try:
+            run_id = json.loads(session_path.read_text(encoding="utf-8")).get("runId")
+        except Exception as e:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Could not read session.json", "detail": str(e)},
+            )
+        if not run_id:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "session.json missing runId", "detail": ""},
+            )
+        return {
+            "runId": run_id,
+            "weeks": body.weeks,
+            "hint": "Pulse written to data/output/.",
+        }
+    except Exception as e:
+        logger.exception("POST /v1/pipeline/run failed")
         return JSONResponse(
             status_code=500,
             content={
-                "error": pipeline_failure_hint(err),
-                "detail": err[-2000:],
+                "error": "Railway worker crashed or ran out of memory. Check Railway logs.",
+                "detail": f"{type(e).__name__}: {e}\n{traceback.format_exc()}"[-4000:],
             },
         )
-    session_path = PROJECT_ROOT / "data" / "cache" / "session.json"
-    try:
-        run_id = json.loads(session_path.read_text(encoding="utf-8")).get("runId")
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Could not read session.json", "detail": str(e)},
-        )
-    if not run_id:
-        return JSONResponse(
-            status_code=500,
-            content={"error": "session.json missing runId", "detail": ""},
-        )
-    return {
-        "runId": run_id,
-        "weeks": body.weeks,
-        "hint": "Pulse written to data/output/.",
-    }
 
 
 @app.post("/v1/email")
@@ -141,6 +159,20 @@ def send_email_route(
     body: EmailBody,
     _: Annotated[None, Depends(verify_bearer)],
 ):
+    try:
+        return _send_email_impl(body)
+    except Exception as e:
+        logger.exception("POST /v1/email failed")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "Railway worker error (see detail). Check Railway logs / memory.",
+                "detail": f"{type(e).__name__}: {e}\n{traceback.format_exc()}"[-4000:],
+            },
+        )
+
+
+def _send_email_impl(body: EmailBody) -> dict | JSONResponse:
     settings.ensure_dirs()
     recipient = body.recipient.strip()
     if not recipient:
@@ -163,15 +195,8 @@ def send_email_route(
             "--weeks",
             str(body.weeks),
         ]
-        proc = subprocess.run(
-            cmd,
-            cwd=PROJECT_ROOT,
-            env={**os.environ},
-            capture_output=True,
-            text=True,
-        )
-        err = (proc.stderr or "") + (proc.stdout or "")
-        if proc.returncode != 0:
+        code, err = _run_cmd(cmd)
+        if code != 0:
             return JSONResponse(
                 status_code=500,
                 content={
@@ -221,20 +246,13 @@ def send_email_route(
     if body.recipient_name and body.recipient_name.strip():
         args.extend(["--recipient-name", body.recipient_name.strip()])
 
-    proc = subprocess.run(
-        args,
-        cwd=PROJECT_ROOT,
-        env={**os.environ},
-        capture_output=True,
-        text=True,
-    )
-    if proc.returncode != 0:
-        tail = (proc.stderr or "")[-1500:]
+    code, tail = _run_cmd(args)
+    if code != 0:
         return JSONResponse(
             status_code=500,
             content={
                 "error": "phase5_email.run failed. Check SMTP / Resend env vars.",
-                "detail": tail,
+                "detail": tail[-1500:],
             },
         )
 

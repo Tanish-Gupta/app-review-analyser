@@ -54,6 +54,14 @@ If deploy fails with **`The executable 'npm' could not be found`**, Railway is s
 3. Under **Deploy**: **delete / clear** **Custom Start Command** (remove `npm run start --workspace=...`). The container should start **`uvicorn`** (repo root **`railway.toml`** sets this; **`Dockerfile`** `CMD` matches).
 4. Redeploy.
 
+## HTTP 502 from Vercel when calling `/api/email`
+
+A **502 Bad Gateway** on the Next.js side usually means **Railway closed the connection** without a valid HTTP response: process **OOM**, **crash**, **platform timeout**, or **redeploy mid-request**.
+
+- Open **Railway → Deployments → Logs** for the same timestamp.
+- Try a **larger memory** tier, or set **`PHASE3_MAX_ROWS`** lower on Railway to reduce Groq + memory use.
+- The API now **discards subprocess stdout** and only keeps a **tail of stderr** to reduce peak memory during long scrapes.
+
 ## Notes
 
 - Container filesystem is ephemeral unless you attach a volume; `data/` is recreated each deploy.

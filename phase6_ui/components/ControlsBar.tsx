@@ -42,8 +42,10 @@ function hintForHttpStatus(status: number): string | null {
     return "Gateway/timeout — the pipeline often exceeds Vercel’s serverless limit on Hobby (~10s). Use Vercel Pro (higher maxDuration) or run the heavy job directly on Railway.";
   if (status === 401 || status === 403)
     return "Auth rejected — RAILWAY_API_SECRET on Vercel must exactly match Railway’s variable.";
+  if (status === 502)
+    return "Bad Gateway — Vercel reached Railway but the upstream failed (Railway OOM/restart, cold start, or proxy timeout). Check Railway → Logs & Metrics; increase memory; lower PHASE3_MAX_ROWS.";
   if (status === 503)
-    return "Misconfiguration — e.g. RAILWAY_API_URL without RAILWAY_API_SECRET.";
+    return "Service unavailable — e.g. Railway overloaded, or (on Vercel) RAILWAY_API_URL set without RAILWAY_API_SECRET.";
   if (status === 501)
     return "Railway not connected — add RAILWAY_API_URL + RAILWAY_API_SECRET in Vercel env, then redeploy.";
   return null;
