@@ -38,11 +38,17 @@ Pulse data is read from `../data/output/pulse_*.json` when present; otherwise fr
 
 Requires repo-root **`.env`**: `GROQ_API_KEY`, plus SMTP or Resend for send. Full pipeline can take **several minutes** locally.
 
-Disabled on Vercel (`501`) until a hosted worker exists.
+## Connect Vercel to Railway
+
+If **`RAILWAY_API_URL`** and **`RAILWAY_API_SECRET`** are set on **Vercel**, **`/api/run`** and **`/api/email`** proxy to your **Railway** FastAPI service — **Generate pulse** and **Fetch & send** work from the hosted UI. Groq and email credentials live on **Railway**, not Vercel.
+
+See **[`phase6_ui/.env.example`](./.env.example)** for copy-paste names and **[`railway_api/README.md`](../railway_api/README.md)** for the HTTP API.
+
+Without those env vars on Vercel, those buttons return **501** (no local Python on Vercel).
 
 ## Deploy (Vercel)
 
-**Yes — deploy the Next.js app.** Vercel runs **Phase 6 only**. The Python ingest → Groq → pulse pipeline does **not** run on Vercel’s serverless runtime (no bundled Python deps, long jobs, Play Store scrape). Those API routes return **501** with a clear message; run the pipeline **locally** (or on a separate worker) and ship pulses another way (see below).
+**Yes — deploy the Next.js app.** Vercel runs **Phase 6** in the browser and as serverless routes. The Python pipeline runs **on Railway** when `RAILWAY_API_URL` + `RAILWAY_API_SECRET` are set; otherwise it runs only **locally** via `python3`.
 
 ### Steps
 
@@ -52,7 +58,8 @@ Disabled on Vercel (`501`) until a hosted worker exists.
 4. Either:
    - **Recommended:** set **Root Directory** to **`phase6_ui`**, then use default **Install Command** `npm install` and **Build Command** `npm run build`, **or**
    - Leave root directory as **`.`** — the monorepo root **`package.json`** declares **`next`** (and npm **workspaces** include `phase6_ui`) so Vercel detects Next.js; **`vercel.json`** runs **`npm install`** + **`npm run build`** at the repo root (still avoids Python owning the deploy because of top-level `requirements.txt`).
-5. Deploy. The site will show **`public/sample/`** pulse data when `data/output/` is absent (normal on Vercel).
+5. Add **Environment variables** (see **`.env.example`** in this folder): at minimum **`RAILWAY_API_URL`** + **`RAILWAY_API_SECRET`** to use your Railway backend.
+6. Deploy. The site will show **`public/sample/`** pulse data when `data/output/` is absent (normal on Vercel); after a successful Railway-backed run, refresh — **note:** new pulse JSON still lands on Railway’s disk, not Vercel’s filesystem, so the **home page** may keep showing **sample** until you add blob sync or copy artifacts into **`public/sample/`** (see architecture doc).
 
 ### “No python entrypoint found”
 
@@ -66,12 +73,12 @@ Vercel reads the **`package.json` in your Root Directory**. If Root Directory is
 
 The app builds to **`phase6_ui/.next`**, not the repo root. The root **`vercel.json`** sets **`outputDirectory`** to **`phase6_ui/.next`**. In Vercel **Project → Settings → General**, clear any manual **Output Directory** override (leave empty / default) so **`vercel.json`** wins. Easiest alternative: set **Root Directory** to **`phase6_ui`** only and remove custom output directory — then `.next` lives next to that **`package.json`**.
 
-### What works vs not
+### What works where
 
-| On Vercel | Locally |
-|-----------|---------|
-| Dashboard UI, history, viewing **`public/sample`** pulses | Full pipeline + **`data/output`** pulses |
-| **`Generate pulse` / `Fetch & send`** → **501** (by design) | Same buttons run Python + email |
+| Where | UI | Pipeline + email |
+|-------|----|------------------|
+| **Local** (`npm run dev` in `phase6_ui`) | Yes | Local `python3` if Railway env **not** set; else **Railway** |
+| **Vercel** | Yes | **Railway** only if `RAILWAY_API_URL` + `RAILWAY_API_SECRET` set; else **501** |
 
 ### Showing your own pulse on production
 

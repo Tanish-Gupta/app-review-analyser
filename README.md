@@ -15,7 +15,7 @@ a Vercel-hosted Next.js UI.
 | 3 — Theme discovery & grouping | Groq-powered theming | ✅ built |
 | 4 — Pulse builder | Render the one-pager | ✅ built |
 | 5 — Email | Draft / send via Resend or SMTP | ✅ built |
-| 6 — Vercel UI | Next.js dashboard ([deploy `phase6_ui` on Vercel](./phase6_ui/README.md#deploy-vercel)) | ✅ UI; pipeline stays local / worker ⏳ |
+| 6 — Vercel UI | Next.js dashboard ([deploy + Railway wiring](./phase6_ui/README.md#connect-vercel-to-railway)) | ✅ UI; pipeline on **Railway** when env set |
 
 ## Quick start (Phase 1 only, today)
 
@@ -61,4 +61,4 @@ The pipeline runs in **`railway_api`** (`Dockerfile` at repo root). See **[railw
 
 1. Create a Railway service from this repo; **Dockerfile** build (root directory `.`).
 2. Set **`RAILWAY_API_SECRET`**, **`GROQ_API_KEY`**, **`PLAYSTORE_APP_ID`**, and email vars (**`EMAIL_FROM`**, SMTP or **`RESEND_API_KEY`**).
-3. On **Vercel** (Phase 6), add **`RAILWAY_API_URL`** (HTTPS service URL) and the **same** **`RAILWAY_API_SECRET`** so **`Fetch latest data / Generate pulse`** proxy to Railway instead of returning 501.
+3. On **Vercel** (Phase 6 project), add **`RAILWAY_API_URL`** and **`RAILWAY_API_SECRET`** — see **[`phase6_ui/.env.example`](./phase6_ui/.env.example)** — then redeploy. Same secret string must exist on **Railway**.
