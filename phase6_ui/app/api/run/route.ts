@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import {
+  railwayBackendConfigured,
+  railwayBackendMisconfigured,
+  railwayPost,
+} from "@/lib/railwayBackend";
+import {
   pipelineFailureHint,
   runPhasesOneThroughFour,
 } from "@/lib/runPipeline";
@@ -14,9 +19,46 @@ export async function POST(req: Request) {
     /* default weeks */
   }
 
+  if (railwayBackendMisconfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "RAILWAY_API_URL is set but RAILWAY_API_SECRET is missing. Add both to run the pipeline from the cloud API.",
+      },
+      { status: 503 },
+    );
+  }
+
+  if (railwayBackendConfigured()) {
+    const res = await railwayPost("/v1/pipeline/run", { weeks });
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      detail?: string;
+      runId?: string;
+      hint?: string;
+    };
+    if (!res.ok) {
+      return NextResponse.json(
+        {
+          error: data.error ?? "Railway pipeline failed",
+          detail: data.detail ?? "",
+        },
+        { status: res.status >= 400 && res.status < 600 ? res.status : 500 },
+      );
+    }
+    return NextResponse.json({
+      runId: data.runId,
+      weeks,
+      hint: data.hint ?? "Pulse written to data/output/. Refresh the home page to view it.",
+    });
+  }
+
   if (process.env.VERCEL === "1") {
     return NextResponse.json(
-      { error: "Pipeline runs locally via Python on this repo." },
+      {
+        error:
+          "Pipeline not configured. Set RAILWAY_API_URL + RAILWAY_API_SECRET for the Railway API, or run locally.",
+      },
       { status: 501 },
     );
   }

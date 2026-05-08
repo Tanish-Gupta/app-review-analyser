@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { getCachedRunIdForWeeks } from "@/lib/pulseCache";
 import { artifactPathsForRun } from "@/lib/pulses";
 import {
+  railwayBackendConfigured,
+  railwayBackendMisconfigured,
+  railwayPost,
+} from "@/lib/railwayBackend";
+import {
   pipelineFailureHint,
   runPhasesOneThroughFour,
 } from "@/lib/runPipeline";
@@ -29,11 +34,54 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "recipient is required" }, { status: 400 });
   }
 
+  if (railwayBackendMisconfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "RAILWAY_API_URL is set but RAILWAY_API_SECRET is missing. Add both for the Railway API.",
+      },
+      { status: 503 },
+    );
+  }
+
+  if (railwayBackendConfigured()) {
+    const res = await railwayPost("/v1/email", {
+      weeks,
+      recipient,
+      recipientName: recipientName ?? undefined,
+      mode,
+      forceRefresh,
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      error?: string;
+      detail?: string;
+      message?: string;
+      runId?: string;
+      usedCache?: boolean;
+    };
+    if (!res.ok) {
+      return NextResponse.json(
+        {
+          error: data.error ?? "Railway email pipeline failed",
+          detail: data.detail ?? "",
+        },
+        { status: res.status >= 400 && res.status < 600 ? res.status : 500 },
+      );
+    }
+    return NextResponse.json({
+      ok: true,
+      runId: data.runId,
+      usedCache: data.usedCache,
+      message: data.message,
+    });
+  }
+
   if (process.env.VERCEL === "1") {
     return NextResponse.json(
       {
         error:
-          "Full pipeline + email runs locally (Python). Deploy a worker for cloud.",
+          "Email + pipeline need the Railway API. Set RAILWAY_API_URL + RAILWAY_API_SECRET, or run locally.",
       },
       { status: 501 },
     );

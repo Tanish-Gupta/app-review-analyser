@@ -15,7 +15,7 @@ a Vercel-hosted Next.js UI.
 | 3 — Theme discovery & grouping | Groq-powered theming | ✅ built |
 | 4 — Pulse builder | Render the one-pager | ✅ built |
 | 5 — Email | Draft / send via Resend or SMTP | ✅ built |
-| 6 — Vercel UI | Next.js + Python serverless | ✅ UI (local); cloud worker ⏳ |
+| 6 — Vercel UI | Next.js dashboard ([deploy `phase6_ui` on Vercel](./phase6_ui/README.md#deploy-vercel)) | ✅ UI; pipeline stays local / worker ⏳ |
 
 ## Quick start (Phase 1 only, today)
 
@@ -48,8 +48,17 @@ app review analyser/
 ├── phase3_themes/         # Groq theme discovery + classification
 ├── phase4_pulse/          # one-pager builder
 ├── phase5_email/          # email draft / send
-├── phase6_ui/             # Next.js UI (Vercel)
+├── phase6_ui/             # Next.js UI (Vercel; proxies to Railway when env set)
+├── railway_api/           # FastAPI + Dockerfile for Railway (pipeline over HTTP)
 ├── orchestrator/          # CLI + run_all() pipeline
 ├── data/                  # local artefacts (gitignored)
 └── tests/
 ```
+
+## Railway (Docker API)
+
+The pipeline runs in **`railway_api`** (`Dockerfile` at repo root). See **[railway_api/README.md](./railway_api/README.md)**.
+
+1. Create a Railway service from this repo; **Dockerfile** build (root directory `.`).
+2. Set **`RAILWAY_API_SECRET`**, **`GROQ_API_KEY`**, **`PLAYSTORE_APP_ID`**, and email vars (**`EMAIL_FROM`**, SMTP or **`RESEND_API_KEY`**).
+3. On **Vercel** (Phase 6), add **`RAILWAY_API_URL`** (HTTPS service URL) and the **same** **`RAILWAY_API_SECRET`** so **`Fetch latest data / Generate pulse`** proxy to Railway instead of returning 501.
