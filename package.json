@@ -1,0 +1,10 @@
+{
+  "name": "app-review-analyser",
+  "private": true,
+  "description": "Monorepo: Python pipeline + Next.js UI. Vercel only builds phase6_ui (see vercel.json).",
+  "scripts": {
+    "build": "npm run build --prefix phase6_ui",
+    "dev": "npm run dev --prefix phase6_ui",
+    "install:ui": "npm install --prefix phase6_ui"
+  }
+}

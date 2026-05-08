@@ -42,4 +42,30 @@ Disabled on Vercel (`501`) until a hosted worker exists.
 
 ## Deploy (Vercel)
 
-Connect the `phase6_ui` folder as the project root. Static pages work; live pipeline + email need the Python worker described in `architecture.md`.
+**Yes — deploy the Next.js app.** Vercel runs **Phase 6 only**. The Python ingest → Groq → pulse pipeline does **not** run on Vercel’s serverless runtime (no bundled Python deps, long jobs, Play Store scrape). Those API routes return **501** with a clear message; run the pipeline **locally** (or on a separate worker) and ship pulses another way (see below).
+
+### Steps
+
+1. Push this repo to GitHub (you already have [Tanish-Gupta/app-review-analyser](https://github.com/Tanish-Gupta/app-review-analyser)).
+2. In [Vercel](https://vercel.com/new) → **Add New Project** → import that repo.
+3. **Critical:** under **Configure Project**, set **Framework Preset** to **Next.js** (not Python).
+4. Either:
+   - **Recommended:** set **Root Directory** to **`phase6_ui`**, then use default **Install Command** `npm install` and **Build Command** `npm run build`, **or**
+   - Leave root directory as **`.`** — the repo now includes root **`package.json`** + **`vercel.json`** so Vercel runs `npm install` / `npm run build` inside **`phase6_ui`** (avoids Python trying to own the project because of top-level `requirements.txt`).
+5. Deploy. The site will show **`public/sample/`** pulse data when `data/output/` is absent (normal on Vercel).
+
+### “No python entrypoint found”
+
+Vercel saw **`requirements.txt`** at the repo root and assumed a **Python** project. Fix: use **Next.js** as the framework and either **Root Directory = `phase6_ui`** or pull the latest repo (root **`vercel.json`** + **`package.json`** delegates the build to the UI folder).
+
+### What works vs not
+
+| On Vercel | Locally |
+|-----------|---------|
+| Dashboard UI, history, viewing **`public/sample`** pulses | Full pipeline + **`data/output`** pulses |
+| **`Generate pulse` / `Fetch & send`** → **501** (by design) | Same buttons run Python + email |
+
+### Showing your own pulse on production
+
+- **Quick:** Copy built artifacts into `phase6_ui/public/sample/` (`pulse.json`, `.md`, `.html`) and redeploy, **or**
+- **Proper:** Store pulses in blob storage (e.g. Vercel Blob) and teach `lib/pulses.ts` to read from URL — not implemented yet; see `architecture.md` for a worker-based design.
