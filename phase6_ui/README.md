@@ -62,6 +62,10 @@ Vercel saw **`requirements.txt`** at the repo root and assumed a **Python** proj
 
 Vercel reads the **`package.json` in your Root Directory**. If Root Directory is **`.`** (repo root), that file must list **`next`** in **dependencies** — the monorepo root **`package.json`** now does, plus **`workspaces`: [`phase6_ui`]**. Alternatively set **Root Directory** to **`phase6_ui`** only so Vercel reads **`phase6_ui/package.json`** directly.
 
+### “The Next.js output directory `.next` was not found at …/path0/.next”
+
+The app builds to **`phase6_ui/.next`**, not the repo root. The root **`vercel.json`** sets **`outputDirectory`** to **`phase6_ui/.next`**. In Vercel **Project → Settings → General**, clear any manual **Output Directory** override (leave empty / default) so **`vercel.json`** wins. Easiest alternative: set **Root Directory** to **`phase6_ui`** only and remove custom output directory — then `.next` lives next to that **`package.json`**.
+
 ### What works vs not
 
 | On Vercel | Locally |
