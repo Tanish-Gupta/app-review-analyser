@@ -45,6 +45,15 @@ docker run --rm -p 8000:8000 \
 
 Railway sets **`PORT`** automatically; the image uses **`${PORT:-8000}`**.
 
+## Railway dashboard (important)
+
+If deploy fails with **`The executable 'npm' could not be found`**, Railway is still using **monorepo npm** commands from an earlier setup. This API image is **Python only** (no Node).
+
+1. Open the service → **Settings**.
+2. Under **Build** (or **Build & Deploy**): **delete / clear** **Custom Build Command** (remove `npm run build --workspace=...`). The **`Dockerfile`** must be the only build step.
+3. Under **Deploy**: **delete / clear** **Custom Start Command** (remove `npm run start --workspace=...`). The container should start **`uvicorn`** (repo root **`railway.toml`** sets this; **`Dockerfile`** `CMD` matches).
+4. Redeploy.
+
 ## Notes
 
 - Container filesystem is ephemeral unless you attach a volume; `data/` is recreated each deploy.

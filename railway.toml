@@ -1,0 +1,10 @@
+# Railway config-as-code: force Docker + uvicorn (no Node/npm in this image).
+# If the dashboard still shows npm build/start, clear those under Service → Settings → Build / Deploy.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "sh -c 'exec uvicorn railway_api.main:app --host 0.0.0.0 --port ${PORT:-8000}'"
+restartPolicyType = "ON_FAILURE"
