@@ -1,0 +1,19 @@
+# {{ p.title }}
+
+Reviews analyzed: {{ p.review_count }} | Avg rating: {{ "%.2f"|format(p.avg_rating) }}★ | Window: {{ p.window_start }} to {{ p.window_end }}
+
+## Top Themes
+{% for t in p.top_themes %}
+{{ loop.index }}. **{{ t.name }}** — {{ (t.volume_share * 100)|round(1) }}% of reviews, {{ (t.negative_share * 100)|round(1) }}% negative
+{% endfor %}
+
+## In Their Words
+{% for q in p.quotes %}
+- "{{ q.text }}" (★{{ q.rating }}, {{ q.date }})
+{% endfor %}
+
+## Three Action Ideas
+{% for a in p.actions %}
+{{ loop.index }}. [{{ a.owner }}] {{ a.idea }}
+{% endfor %}
+

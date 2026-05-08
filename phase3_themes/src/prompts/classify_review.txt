@@ -1,0 +1,21 @@
+Classify each review into exactly one theme.
+
+Rules:
+1) Output STRICT JSON object only.
+2) JSON shape:
+{
+  "assignments": [
+    {"review_id": "string", "theme_id": "T1", "confidence": 0.0}
+  ]
+}
+3) theme_id must be one of provided IDs.
+4) confidence must be between 0 and 1.
+5) Use semantics of the theme definitions, not keyword matching only.
+6) Do not generate extra fields.
+
+Themes:
+{themes_json}
+
+Reviews:
+{reviews_json}
+

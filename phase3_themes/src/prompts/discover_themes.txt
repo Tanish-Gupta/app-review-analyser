@@ -1,0 +1,19 @@
+Given Play Store reviews for the Groww app, discover between {min_themes} and {max_themes}
+high-signal product themes.
+
+Rules:
+1) Output STRICT JSON object only.
+2) JSON shape:
+{
+  "themes": [
+    {"name": "string", "definition": "string"}
+  ]
+}
+3) Keep themes non-overlapping and actionable.
+4) Keep theme names short (3-6 words).
+5) Focus on issues/features users actually discuss.
+6) Do not include PII or specific user identifiers.
+
+Reviews:
+{reviews_json}
+

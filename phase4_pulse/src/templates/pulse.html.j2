@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ p.title }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+    h1 { margin-bottom: 6px; }
+    .meta { color: #555; margin-bottom: 18px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    ul, ol { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>{{ p.title }}</h1>
+  <div class="meta">Reviews analyzed: {{ p.review_count }} | Avg rating: {{ "%.2f"|format(p.avg_rating) }}★ | Window: {{ p.window_start }} to {{ p.window_end }}</div>
+
+  <h2>Top Themes</h2>
+  {% for t in p.top_themes %}
+  <div class="card">
+    <strong>{{ loop.index }}. {{ t.name }}</strong><br />
+    {{ (t.volume_share * 100)|round(1) }}% of reviews, {{ (t.negative_share * 100)|round(1) }}% negative
+  </div>
+  {% endfor %}
+
+  <h2>In Their Words</h2>
+  <ul>
+  {% for q in p.quotes %}
+    <li>"{{ q.text }}" (★{{ q.rating }}, {{ q.date }})</li>
+  {% endfor %}
+  </ul>
+
+  <h2>Three Action Ideas</h2>
+  <ol>
+  {% for a in p.actions %}
+    <li><strong>[{{ a.owner }}]</strong> {{ a.idea }}</li>
+  {% endfor %}
+  </ol>
+</body>
+</html>
+

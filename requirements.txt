@@ -1,0 +1,24 @@
+# --- Phase 1: Ingest ---
+google-play-scraper==1.2.7
+
+# --- Shared ---
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+
+# --- Phase 2 (added later) ---
+langdetect>=1.0.9
+pandas>=2.2.0
+pyarrow>=16.0.0
+spacy>=3.8.0
+
+# --- Phase 3 (added later) ---
+# sentence-transformers>=2.2.2  # optional pre-cluster
+
+# --- Phase 4 (added later) ---
+# jinja2>=3.1.2
+# markdown>=3.5
+
+# --- Phase 5 (added later) ---
+# resend>=0.7.0

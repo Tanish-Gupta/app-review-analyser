@@ -1,0 +1,73 @@
+{
+  "title": "Groww Weekly Pulse \u2014 Week 19, 2026",
+  "week": 19,
+  "year": 2026,
+  "generated_at": "2026-05-08T12:29:14.917953Z",
+  "review_count": 3686,
+  "avg_rating": 3.58,
+  "window_start": "2026-02-13",
+  "window_end": "2026-05-07",
+  "top_themes": [
+    {
+      "id": "T1",
+      "name": "High Brokerage Fees",
+      "definition": "Users are unhappy with the high fees charged by the app for various transactions.",
+      "review_count": 2002,
+      "volume_share": 0.5431361909929463,
+      "negative_share": 0.3276723276723277,
+      "avg_rating": 3.5314685314685317
+    },
+    {
+      "id": "T2",
+      "name": "Poor Customer Service",
+      "definition": "Users have reported poor customer service, including unresponsive support and unhelpful responses.",
+      "review_count": 243,
+      "volume_share": 0.06592512208355941,
+      "negative_share": 0.6666666666666666,
+      "avg_rating": 2.2386831275720165
+    },
+    {
+      "id": "T3",
+      "name": "Glitches and Technical Issues",
+      "definition": "Users have experienced various technical issues, including slow order execution, app lag, and incorrect portfolio calculations.",
+      "review_count": 922,
+      "volume_share": 0.2501356483993489,
+      "negative_share": 0.32537960954446854,
+      "avg_rating": 3.552060737527115
+    }
+  ],
+  "quotes": [
+    {
+      "theme_id": "T1",
+      "text": "The most loved app by me. I want to request that you introduce basket orders as well. I am very happy that you all introduced trailing stop loss as per request. please introduce basket order as well",
+      "rating": 5,
+      "date": "2026-03-02"
+    },
+    {
+      "theme_id": "T2",
+      "text": "Fraud app. If u call the customer care then u can't reach them. Even after waiting 30 min , no one responded.They don't reply u also worst app. Application crashes every time. Fraud application. Dear new customers don't open an account on [USER].",
+      "rating": 1,
+      "date": "2026-02-26"
+    },
+    {
+      "theme_id": "T3",
+      "text": "I have many reasons for not choosing groww 1. Brokerage on equity delivery 2. Worst customer and product support 3. Very less new feature updates 4. No resolution to the issues even after months 5. Wrong OI data in 915 platform",
+      "rating": 1,
+      "date": "2026-03-30"
+    }
+  ],
+  "actions": [
+    {
+      "owner": "Product",
+      "idea": "Create a feature to display estimated brokerage fees for users before they initiate a transaction."
+    },
+    {
+      "owner": "Eng",
+      "idea": "Implement a system to track and resolve customer support issues more efficiently, including automated response generation and issue escalation."
+    },
+    {
+      "owner": "Support",
+      "idea": "Develop a knowledge base article to address common technical issues, such as app lag and incorrect portfolio calculations, and provide step-by-step troubleshooting guides."
+    }
+  ]
+}
