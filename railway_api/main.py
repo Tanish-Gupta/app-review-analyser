@@ -68,6 +68,20 @@ class EmailBody(BaseModel):
     force_refresh: bool = Field(default=False, alias="forceRefresh")
 
 
+@app.get("/")
+def root() -> dict[str, object]:
+    """Browser-friendly root — this service is the pipeline API, not the Next.js UI."""
+    return {
+        "service": "Groww Pulse Pipeline API",
+        "docs": "OpenAPI at /docs (if enabled)",
+        "try": {"GET /health": "liveness check"},
+        "endpoints": {
+            "POST /v1/pipeline/run": '{"weeks": 12}',
+            "POST /v1/email": "weeks, recipient, mode, …",
+        },
+    }
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
